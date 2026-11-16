@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>메이커리 관리자</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0a0714">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0714'/%3E%3Cpath d='M14 46V18h7l11 16 11-16h7v28h-7V30L32 45 21 30v16z' fill='%23b693ff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Unbounded:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a dark glass "company site" — left-aligned editorial hero with a spec-sheet
+   glass panel, two neon hues that always mean the two education axes (violet = AI·디지털, cyan = 창의·인재). */
+:root{
+  color-scheme: dark;
+  --ink:#0a0714;
+  --ink-2:#120c22;
+  --glass:rgba(186,168,255,.065);
+  --glass-2:rgba(186,168,255,.11);
+  --line:rgba(204,190,255,.16);
+  --line-2:rgba(204,190,255,.30);
+  --text:#eeeaf8;
+  --mute:#a9a2c0;
+  --violet:#b693ff;
+  --violet-deep:#7c4dff;
+  --cyan:#62e8e0;
+  --warn:#ffcf70;
+  --f-display:"Unbounded","Gothic A1",system-ui,sans-serif;
+  --f-head:"Gothic A1","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --r:18px;
+  --wrap:1160px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--ink);color:var(--text);font-family:var(--f-body);font-size:16.5px;line-height:1.75;
+  -webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:anywhere}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(900px 520px at 88% -8%, rgba(124,77,255,.30), transparent 62%),
+    radial-gradient(700px 480px at -6% 38%, rgba(98,232,224,.11), transparent 60%),
+    radial-gradient(900px 600px at 60% 110%, rgba(124,77,255,.16), transparent 60%),
+    var(--ink)}
+a{color:inherit}
+img{max-width:100%}
+[hidden]{display:none!important}
+h1,h2,h3,h4{font-family:var(--f-head);line-height:1.25;margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:6px}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 22px}
+.eyebrow{font-family:var(--f-display);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--violet);display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:"";width:26px;height:1px;background:currentColor;opacity:.7}
+.eyebrow.c{color:var(--cyan)}
+.mute{color:var(--mute)}
+.small{font-size:14px}
+
+/* header */
+.top{position:sticky;top:0;z-index:30;background:rgba(10,7,20,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:20px;min-height:66px;flex-wrap:wrap}
+.logo{display:flex;align-items:baseline;gap:10px;text-decoration:none;margin-right:auto;padding:10px 0}
+.logo b{font-family:var(--f-display);font-weight:800;font-size:17px;letter-spacing:.04em}
+.logo b i{font-style:normal;color:var(--violet)}
+.logo span{font-family:var(--f-head);font-weight:700;font-size:14px;color:var(--mute)}
+.nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;max-width:100%;padding:6px 0}
+.nav::-webkit-scrollbar{display:none}
+.nav a{white-space:nowrap;text-decoration:none;font-family:var(--f-head);font-weight:700;font-size:15px;color:var(--mute);padding:8px 14px;border-radius:999px;border:1px solid transparent;transition:color .2s,background .2s,border-color .2s}
+.nav a:hover{color:var(--text)}
+.nav a[aria-current="page"]{color:var(--text);background:var(--glass-2);border-color:var(--line-2);box-shadow:0 0 18px rgba(182,147,255,.25) inset}
+
+/* shared pieces */
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);position:relative}
+.glass.edge::before{content:"";position:absolute;left:18px;right:18px;top:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--violet),transparent)}
+.glass.edge.c::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-head);font-weight:700;font-size:15px;text-decoration:none;cursor:pointer;
+  padding:12px 20px;border-radius:999px;border:1px solid var(--line-2);background:var(--glass);transition:transform .15s,box-shadow .2s,background .2s}
+.btn:hover{transform:translateY(-1px);background:var(--glass-2)}
+.btn.pri{background:linear-gradient(135deg,#8a5cff,#6a3df0);border-color:rgba(214,196,255,.55);box-shadow:0 0 0 1px rgba(182,147,255,.2),0 8px 30px rgba(124,77,255,.45)}
+.btn.pri:hover{box-shadow:0 0 0 1px rgba(182,147,255,.4),0 10px 38px rgba(124,77,255,.65)}
+.btn.sm{padding:7px 14px;font-size:13.5px}
+.btn.ghost{border-color:var(--line)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
+.chip.v{color:var(--violet);border-color:rgba(182,147,255,.45)}
+.chip.c{color:var(--cyan);border-color:rgba(98,232,224,.4)}
+.chip.w{color:var(--warn);border-color:rgba(255,207,112,.45)}
+.sec{padding-top:76px;padding-bottom:76px}
+.sec-head{display:grid;gap:14px;margin-bottom:34px;max-width:720px}
+.sec-head h2{font-size:clamp(26px,3.6vw,38px);font-weight:800}
+.sec-head p{color:var(--mute)}
+.grid{display:grid;gap:18px}
+.g3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.card{padding:26px;display:grid;gap:12px;align-content:start}
+.card h3{font-size:20px;font-weight:800}
+.card p{color:var(--mute);font-size:15.5px}
+.view{display:none}
+.view.on{display:block;animation:rise .45s ease both}
+@keyframes rise{from{opacity:.6;transform:translateY(8px)}to{opacity:1;transform:none}}
+.page-head{padding:64px 0 10px;display:grid;gap:16px;max-width:760px}
+.page-head h1{font-size:clamp(32px,5vw,52px);font-weight:800}
+.page-head p{color:var(--mute);font-size:17.5px}
+.note{padding:14px 18px;border-radius:14px;border:1px dashed var(--line-2);color:var(--mute);font-size:14.5px;background:rgba(255,255,255,.02)}
+.empty{padding:34px;text-align:center;color:var(--mute)}
+.grid>.note,.grid>.empty{grid-column:1/-1}
+summary::-webkit-details-marker{display:none}
+
+/* hero */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.75}
+.hero .wrap{position:relative;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);gap:44px;align-items:center;padding-top:84px;padding-bottom:84px}
+.hero h1{font-size:clamp(38px,6.4vw,76px);font-weight:800;line-height:1.12;letter-spacing:-.03em}
+.hero h1 em{font-style:normal;background:linear-gradient(100deg,var(--violet) 10%,var(--cyan) 95%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 42px rgba(182,147,255,.35)}
+.hero .lead{font-size:18.5px;color:#cfc8e6;max-width:34em;margin:22px 0 30px}
+.hero .cta{display:flex;gap:12px;flex-wrap:wrap}
+.spec{padding:26px;display:grid;gap:18px;background:rgba(21,14,40,.78)}
+.spec .formula{font-family:var(--f-display);font-size:13px;letter-spacing:.08em;display:grid;gap:8px}
+.spec .formula div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.spec .formula div span:last-child{color:var(--mute);font-family:var(--f-body);letter-spacing:0;font-size:13.5px}
+.spec .formula .sum{border:0;font-weight:800;font-size:19px;color:var(--text)}
+.spec .formula .sum span:last-child{font-family:var(--f-head);font-weight:800;font-size:19px;color:var(--violet)}
+.axisbar{display:grid;gap:10px}
+.axisbar div{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:13.5px;color:var(--mute)}
+.axisbar i{height:6px;border-radius:99px;display:block}
+.axisbar .v i{background:linear-gradient(90deg,var(--violet-deep),var(--violet));box-shadow:0 0 14px rgba(182,147,255,.7)}
+.axisbar .c i{background:linear-gradient(90deg,#1fb5ad,var(--cyan));box-shadow:0 0 14px rgba(98,232,224,.55);width:50%}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.facts div{padding:26px 22px;border-right:1px solid var(--line);display:grid;gap:2px}
+.facts div:last-child{border-right:0}
+.facts b{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,4vw,40px);font-variant-numeric:tabular-nums}
+.facts b small{font-family:var(--f-head);font-size:.5em;color:var(--violet);margin-left:4px}
+.facts span{color:var(--mute);font-size:14.5px}
+
+/* axes */
+.axis{padding:30px;display:grid;gap:18px}
+.axis h3{font-size:25px;font-weight:800}
+.axis ul{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.axis li{padding:16px 0;border-top:1px solid var(--line);display:grid;gap:4px}
+.axis li b{font-family:var(--f-head);font-size:17px}
+.axis li span{color:var(--mute);font-size:15px}
+.axis.v h3{color:var(--violet)} .axis.c h3{color:var(--cyan)}
+.principles{counter-reset:p}
+.principles .card h3::before{content:"";display:block;width:34px;height:3px;border-radius:9px;background:linear-gradient(90deg,var(--violet),var(--cyan));margin-bottom:16px;box-shadow:0 0 14px rgba(182,147,255,.6)}
+.band{padding:40px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;background:linear-gradient(120deg,rgba(124,77,255,.22),rgba(98,232,224,.08));}
+.band h2{font-size:clamp(22px,3vw,30px);font-weight:800}
+
+/* resources */
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:26px 0 22px}
+.tools input[type=search]{flex:1 1 220px;min-width:0}
+.field,.tools input[type=search]{background:rgba(8,5,18,.6);border:1px solid var(--line-2);border-radius:12px;padding:11px 14px;width:100%}
+.field:focus,.tools input:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 3px rgba(182,147,255,.2)}
+textarea.field{min-height:120px;resize:vertical}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{cursor:pointer;background:transparent;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-family:var(--f-head);font-weight:700;font-size:14px;color:var(--mute)}
+.seg button[aria-pressed=true]{color:var(--text);border-color:var(--violet);background:rgba(182,147,255,.14)}
+.res{padding:22px;display:grid;gap:12px;align-content:start}
+.res h3{font-size:18.5px;font-weight:800}
+.res p{color:var(--mute);font-size:15px}
+.res .meta{display:flex;gap:6px;flex-wrap:wrap}
+.res .foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px;padding-top:14px;border-top:1px solid var(--line);font-size:13.5px;color:var(--mute)}
+details.adminbox{padding:0;margin:0 0 24px}
+details.adminbox summary{cursor:pointer;padding:16px 20px;font-family:var(--f-head);font-weight:700;list-style:none;display:flex;gap:10px;align-items:center}
+details.adminbox summary::before{content:"+";font-family:var(--f-display);color:var(--cyan)}
+details.adminbox[open] summary::before{content:"–"}
+.form{display:grid;gap:14px;padding:4px 20px 22px}
+.form .row{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.form label{display:grid;gap:6px;font-size:13.5px;color:var(--mute);font-weight:600}
+.msg{font-size:14px;min-height:1.4em}
+.msg.ok{color:var(--cyan)} .msg.err{color:var(--warn)}
+.x{cursor:pointer;background:transparent;border:1px solid var(--line);color:var(--mute);border-radius:999px;font-size:12.5px;padding:3px 10px}
+.x:hover{color:var(--warn);border-color:var(--warn)}
+
+/* notes & board */
+.list{display:grid;gap:14px}
+.post{padding:22px 24px;display:grid;gap:10px}
+.post header{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.post h3{font-size:18.5px;font-weight:800;flex:1 1 240px}
+.post time,.post .who{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}
+.post .body{white-space:pre-wrap;color:#d6d0ea;font-size:15.5px;max-width:70ch}
+.reply{margin-top:6px;padding:14px 16px;border-left:2px solid var(--cyan);background:rgba(98,232,224,.06);border-radius:0 12px 12px 0;display:grid;gap:4px}
+.reply b{font-family:var(--f-head);font-size:13.5px;color:var(--cyan)}
+.replyform{display:flex;gap:8px;flex-wrap:wrap}
+.replyform input{flex:1 1 220px}
+.split{display:grid;gap:26px;grid-template-columns:minmax(0,1.5fr) minmax(280px,.9fr);align-items:start}
+
+/* about */
+.profile{padding:34px;display:grid;gap:18px}
+.profile .name{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,4vw,40px);letter-spacing:.02em}
+.profile .name i{font-style:normal;color:var(--violet)}
+.career{list-style:none;margin:0;padding:0}
+.career li{display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:baseline;padding:14px 0;border-top:1px solid var(--line)}
+.career li:first-child{border-top:0}
+.career .k{font-family:var(--f-head);font-weight:700;font-size:13px;color:var(--violet)}
+.mail{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.mail code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;font-size:15px;padding:10px 14px;border:1px solid var(--line-2);border-radius:12px;background:rgba(8,5,18,.6)}
+.faq details{border-top:1px solid var(--line);padding:16px 0}
+.faq details:first-child{border-top:0}
+.faq summary{cursor:pointer;font-family:var(--f-head);font-weight:700;font-size:16.5px;list-style:none;display:flex;justify-content:space-between;gap:12px}
+.faq summary::after{content:"+";color:var(--violet);font-family:var(--f-display)}
+.faq details[open] summary::after{content:"–"}
+.faq p{color:var(--mute);margin-top:10px;max-width:68ch;font-size:15.5px}
+
+/* dialog */
+dialog{border:1px solid var(--line-2);border-radius:22px;background:#150e29;color:var(--text);padding:0;width:min(460px,calc(100vw - 32px));box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 60px rgba(124,77,255,.25)}
+dialog::backdrop{background:rgba(5,3,12,.72);backdrop-filter:blur(4px)}
+dialog .in{padding:28px;display:grid;gap:14px}
+dialog h3{font-size:21px;font-weight:800}
+.reveal{padding:16px;border-radius:14px;border:1px solid rgba(98,232,224,.4);background:rgba(98,232,224,.07);display:grid;gap:10px}
+
+/* footer */
+footer{border-top:1px solid var(--line);margin-top:40px;padding:54px 0 40px;overflow:hidden}
+footer .cols{display:flex;gap:30px;justify-content:space-between;flex-wrap:wrap;color:var(--mute);font-size:14.5px}
+footer .cols b{color:var(--text);font-family:var(--f-head)}
+footer .big{font-family:var(--f-display);font-weight:800;font-size:clamp(38px,12vw,156px);line-height:1;letter-spacing:.02em;margin-top:38px;color:#0b0817;-webkit-text-stroke:2px rgba(182,147,255,.36);paint-order:stroke fill;white-space:nowrap;user-select:none}
+
+@media (max-width:860px){
+  .hero .wrap{grid-template-columns:1fr;padding-top:56px;padding-bottom:56px}
+  .split{grid-template-columns:1fr}
+  .band{grid-template-columns:1fr;padding:28px}
+  .facts{grid-template-columns:1fr}
+  .facts div{border-right:0;border-bottom:1px solid var(--line)}
+  .facts div:last-child{border-bottom:0}
+  .sec{padding-top:54px;padding-bottom:54px}
+  .career li{grid-template-columns:52px 1fr auto}
+}
+@media (max-width:480px){.nav{gap:2px}.nav a{font-size:14px;padding:7px 8px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+
+/* ───────── 추가 스타일 (뷰어·관리자 공통) ───────── */
+.hero .wrap.facts-wrap{display:block;padding-top:0;padding-bottom:0}
+.list-cap{font-family:var(--f-head);font-size:14px;color:var(--mute);margin-bottom:12px;font-weight:700}
+.form-title{font-size:19px;font-weight:800}
+.formfoot{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.side{position:sticky;top:90px}
+.side .form{padding:22px}
+.owner{font-family:var(--f-head);font-weight:700;font-size:18px}
+.owner-line{font-family:var(--f-head);font-weight:700;color:var(--text)!important;font-size:15.5px!important}
+.about-text{color:#d6d0ea;max-width:62ch;white-space:pre-wrap}
+.pre{white-space:pre-wrap}
+.profile .meta{display:flex;gap:6px;flex-wrap:wrap}
+.career li{grid-template-columns:64px 1fr}
+.nav a .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cyan);margin-left:6px;vertical-align:middle;box-shadow:0 0 8px var(--cyan)}
+
+/* 입장코드 띠 */
+.gate{background:linear-gradient(90deg,rgba(124,77,255,.22),rgba(98,232,224,.10));border-bottom:1px solid var(--line)}
+.gate .wrap{display:flex;gap:10px 16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
+.gate .wrap.gate-msgrow{padding-top:0;padding-bottom:0;justify-content:flex-end}
+.gate .gate-msgrow .msg{min-height:0;padding-bottom:8px}
+.gate .gate-msgrow .msg:empty{display:none}
+.gate-txt{font-size:14px;color:#d9d3ee;flex:1 1 280px}
+.gate-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.gate-form input{background:rgba(8,5,18,.7);border:1px solid var(--line-2);border-radius:999px;padding:8px 14px;font-size:14.5px;width:112px;min-width:0}
+.gate-form input#g-code{width:168px;letter-spacing:.05em;text-transform:uppercase}
+.gate-form input::placeholder{letter-spacing:0;text-transform:none;color:#8f88a8}
+.gate-form input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(98,232,224,.18)}
+.gate-on{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+@media (max-width:560px){
+  .gate-form{width:100%}
+  .gate-form input{flex:1 1 90px;width:auto}
+  .gate-form input#g-code{flex:2 1 130px;width:auto}
+  .side{position:static}
+}
+
+/* 버튼 글자색은 놓인 자리의 글자색을 물려받지 않습니다 */
+.btn{color:var(--text)}
+/* 자료 카드는 개수가 적어도 카드 너비를 유지합니다 */
+#resList{grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr))}
+
+/* ───────── 관리자 화면 ───────── */
+.who{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 0}
+.login{max-width:520px;margin:70px auto;padding:36px}
+.login h1{font-size:30px;font-weight:800}
+.adm{display:grid;grid-template-columns:210px minmax(0,1fr);gap:26px;align-items:start;padding:28px 0 70px}
+.tabs{display:grid;gap:4px;position:sticky;top:86px}
+.tabs button{text-align:left;cursor:pointer;background:transparent;border:1px solid transparent;border-radius:12px;padding:10px 14px;font-family:var(--f-head);font-weight:700;font-size:15px;color:var(--mute)}
+.tabs button:hover{color:var(--text)}
+.tabs button.on{color:var(--text);background:var(--glass-2);border-color:var(--line-2)}
+.panels{display:grid;gap:18px;min-width:0}
+.panel{display:none;gap:18px}
+.panel.on{display:grid}
+.box{padding:24px;display:grid;gap:14px}
+.box h2{font-size:19px;font-weight:800;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.box .form{padding:0}
+.savebar{position:sticky;bottom:12px;background:rgba(21,14,40,.94);z-index:5}
+.ed{display:grid;gap:10px}
+.ed-row{display:grid;gap:10px;padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}
+.ed-fields{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));align-items:end}
+.ed-fields .wide{grid-column:1/-1}
+.ed-row label,.lab{display:grid;gap:6px;font-size:13.5px;color:var(--mute);font-weight:600}
+.ed-row label.check{display:flex;gap:8px;align-items:center;padding-bottom:10px;color:var(--text)}
+.ed-row label.check input{width:18px;height:18px;accent-color:#8a5cff}
+.ed-btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ed-btns .sp{margin-left:auto}
+.mini{cursor:pointer;background:transparent;border:1px solid var(--line);color:var(--mute);border-radius:999px;font-size:12.5px;padding:3px 10px}
+.mini:hover:not(:disabled){color:var(--text);border-color:var(--line-2)}
+.mini:disabled{opacity:.35;cursor:default}
+.rows{display:grid;gap:10px}
+.rowitem{display:grid;gap:10px;padding:14px 16px;border:1px solid var(--line);border-radius:14px}
+.rowhead{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rowhead b{font-family:var(--f-head);font-size:16px;margin-right:auto}
+.rowbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rowitem .body{white-space:pre-wrap;color:#d6d0ea;font-size:15px;max-width:72ch}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;letter-spacing:.06em;text-transform:uppercase}
+.codebig{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;font-size:18px;letter-spacing:.08em;margin-right:auto}
+.lab-btn{display:flex;align-items:flex-end;padding-bottom:4px}
+@media (max-width:860px){
+  .adm{grid-template-columns:1fr}
+  .tabs{position:static;display:flex;overflow-x:auto;gap:4px;scrollbar-width:none}
+  .tabs button{white-space:nowrap}
+  .login{margin:36px auto;padding:26px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="./" aria-label="메이커리 사이트로"><b>MAKER<i>LEE</i></b><span>관리자</span></a>
+    <div class="who">
+      <span class="small mute" id="whoMail"></span>
+      <a class="btn sm ghost" href="./" target="_blank" rel="noopener">사이트 보기 ↗</a>
+      <button class="btn sm" type="button" id="logout" hidden>로그아웃</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- 로그인 -->
+  <section class="glass edge card login" id="login">
+    <p class="eyebrow">Admin</p>
+    <h1>메이커리 관리자</h1>
+    <p id="loginLead">관리자 Google 계정으로 로그인하면 사이트 내용을 고칠 수 있습니다.</p>
+    <button class="btn pri" type="button" id="loginBtn" style="justify-self:start">Google 계정으로 로그인</button>
+    <span class="msg" id="loginMsg" role="status"></span>
+  </section>
+
+  <!-- 관리 화면 -->
+  <section class="adm" id="console" hidden>
+    <nav class="tabs" id="tabs" aria-label="관리 메뉴">
+      <button type="button" data-t="basic" class="on">기본 정보</button>
+      <button type="button" data-t="menu">메뉴</button>
+      <button type="button" data-t="copy">홈·활동 영역 문구</button>
+      <button type="button" data-t="res">자료</button>
+      <button type="button" data-t="notes">노트</button>
+      <button type="button" data-t="member">연수생 전용 정보</button>
+      <button type="button" data-t="codes">입장코드</button>
+      <button type="button" data-t="board">게시판</button>
+    </nav>
+
+    <div class="panels">
+      <p class="note" id="firstRun" hidden>아직 데이터베이스에 저장된 내용이 없어 기본 문구가 채워져 있습니다. 고친 뒤 저장하면 그때부터 저장한 내용이 사이트에 보입니다.</p>
+
+      <!-- 기본 정보 -->
+      <section class="panel on" id="p-basic">
+        <div class="glass box">
+          <h2>기본 정보 <span class="chip">누구에게나 공개</span></h2>
+          <form class="form" id="basicForm">
+            <div class="row">
+              <label>대표 문구 첫 줄<input class="field" id="b-t1" maxlength="30" required></label>
+              <label>대표 문구 둘째 줄 (강조색)<input class="field" id="b-t2" maxlength="30" required></label>
+            </div>
+            <label>대표 문구 아래 소개<textarea class="field" id="b-lead" maxlength="300" style="min-height:90px"></textarea></label>
+            <div class="row">
+              <label>공개 소속·이름<input class="field" id="b-owner" maxlength="60"></label>
+              <label>공개 연락 메일<input class="field" id="b-email" type="email" maxlength="80"></label>
+            </div>
+            <label>소개 페이지 글<textarea class="field" id="b-about" maxlength="1200"></textarea></label>
+            <div class="formfoot"><button class="btn pri sm" type="submit">저장</button><span class="msg" id="basicMsg" role="status"></span></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- 메뉴 -->
+      <section class="panel" id="p-menu">
+        <div class="glass box">
+          <h2>메뉴</h2>
+          <p class="small mute">이름을 바꾸고, 순서를 옮기고, 숨길 수 있습니다. 게시판은 입장코드를 넣은 선생님에게만 보입니다.</p>
+          <div class="ed" id="menuEd"></div>
+          <div class="formfoot"><button class="btn pri sm" type="button" id="menuSave">저장</button><span class="msg" id="menuMsg" role="status"></span></div>
+        </div>
+      </section>
+
+      <!-- 문구 -->
+      <section class="panel" id="p-copy">
+        <div class="glass box"><h2>홈 · 하는 일 <span class="chip">공개</span></h2><div class="ed" id="workEd"></div></div>
+        <div class="glass box"><h2>홈 · 원칙 <span class="chip">공개</span></h2><div class="ed" id="prinEd"></div></div>
+        <div class="glass box"><h2>활동 영역 · 분야 <span class="chip">공개</span></h2><p class="small mute">분야 이름은 자료를 올릴 때 고르는 목록으로도 쓰입니다.</p><div class="ed" id="fieldEd"></div></div>
+        <div class="glass box"><h2>소개 · 자주 묻는 질문 <span class="chip">공개</span></h2><div class="ed" id="faqEd"></div></div>
+        <div class="glass box savebar"><div class="formfoot"><button class="btn pri sm" type="button" id="copySave">문구 모두 저장</button><span class="msg" id="copyMsg" role="status"></span></div></div>
+      </section>
+
+      <!-- 자료 -->
+      <section class="panel" id="p-res">
+        <div class="glass box">
+          <h2 id="resFormTitle">자료 올리기</h2>
+          <p class="small mute">제목과 소개는 누구에게나 보이고, 링크는 입장코드를 넣은 선생님에게만 보입니다.</p>
+          <form class="form" id="resForm">
+            <div class="row">
+              <label>제목<input class="field" id="r-title" required maxlength="80"></label>
+              <label>연수명 (선택)<input class="field" id="r-training" maxlength="60" placeholder="예: 2026 AI 활용 수업 직무연수"></label>
+            </div>
+            <label>소개<textarea class="field" id="r-desc" maxlength="400" style="min-height:80px"></textarea></label>
+            <div class="row">
+              <label>분야<select class="field" id="r-field"></select></label>
+              <label>자료 유형<select class="field" id="r-kind"><option>연수 자료</option><option>수업 지도안</option><option>활동지</option><option>교재</option><option>영상</option><option>기타</option></select></label>
+              <label>대상 (선택)<input class="field" id="r-target" maxlength="30" placeholder="예: 초등 5~6학년"></label>
+            </div>
+            <label>구글 드라이브 공유 링크 (연수생 전용)<input class="field" id="r-link" type="url" maxlength="500" placeholder="https://drive.google.com/..."></label>
+            <div class="formfoot"><button class="btn pri sm" type="submit">저장</button><button class="btn sm ghost" type="button" id="resCancel" hidden>새 자료로 돌아가기</button><span class="msg" id="resMsg" role="status"></span></div>
+          </form>
+        </div>
+        <div class="glass box"><h2>올린 자료</h2><div class="rows" id="resRows"></div></div>
+      </section>
+
+      <!-- 노트 -->
+      <section class="panel" id="p-notes">
+        <div class="glass box">
+          <h2 id="noteFormTitle">노트 쓰기</h2>
+          <form class="form" id="noteForm">
+            <div class="row">
+              <label>제목<input class="field" id="n-title" required maxlength="80"></label>
+              <label>분류<select class="field" id="n-tag"><option>공지</option><option>수업 노트</option><option>연수 후기</option><option>생각</option></select></label>
+              <label>공개 범위<select class="field" id="n-scope"><option value="public">누구에게나 공개</option><option value="member">연수생에게만</option></select></label>
+            </div>
+            <label>내용<textarea class="field" id="n-body" required maxlength="4000" style="min-height:160px"></textarea></label>
+            <div class="formfoot"><button class="btn pri sm" type="submit">저장</button><button class="btn sm ghost" type="button" id="noteCancel" hidden>새 노트로 돌아가기</button><span class="msg" id="noteMsg" role="status"></span></div>
+          </form>
+        </div>
+        <div class="glass box"><h2>올린 노트</h2><div class="rows" id="noteRows"></div></div>
+      </section>
+
+      <!-- 연수생 전용 정보 -->
+      <section class="panel" id="p-member">
+        <div class="glass box">
+          <h2>활동 이력 <span class="chip c">연수생 전용</span></h2>
+          <p class="small mute">소개 페이지에서 입장코드를 넣은 선생님에게만 보입니다.</p>
+          <div class="ed" id="careerEd"></div>
+        </div>
+        <div class="glass box">
+          <h2>연수생 안내 <span class="chip c">연수생 전용</span></h2>
+          <p class="small mute">연수생에게만 알리고 싶은 내용을 적습니다. 전화번호처럼 공개하기 어려운 연락처도 여기에 둘 수 있습니다.</p>
+          <label class="lab">안내 글<textarea class="field" id="m-info" maxlength="1500"></textarea></label>
+        </div>
+        <div class="glass box savebar"><div class="formfoot"><button class="btn pri sm" type="button" id="memberSave">연수생 전용 정보 저장</button><span class="msg" id="memberMsg" role="status"></span></div></div>
+      </section>
+
+      <!-- 입장코드 -->
+      <section class="panel" id="p-codes">
+        <div class="glass box">
+          <h2>입장코드 만들기</h2>
+          <p class="small mute">연수마다 코드를 하나씩 만들어 연수에서 알려 주세요. 어느 코드든 맞으면 연수생 메뉴 전체가 열립니다.</p>
+          <form class="form" id="codeForm">
+            <div class="row">
+              <label>연수 이름 (나만 보는 메모)<input class="field" id="c-label" maxlength="60" required placeholder="예: 11월 20일 AI 활용 연수"></label>
+              <label>사용 기한 (선택, 그날 밤까지)<input class="field" id="c-exp" type="date"></label>
+            </div>
+            <div class="row">
+              <label>입장코드<input class="field code" id="c-code" maxlength="40" required autocomplete="off" spellcheck="false"></label>
+              <div class="lab-btn"><button class="btn sm ghost" type="button" id="c-regen">다른 코드 만들기</button></div>
+            </div>
+            <p class="small mute">영문 대문자, 숫자, 붙임표(-)만 쓸 수 있습니다. 날짜만으로 만들면 추측하기 쉬우니 뒤에 붙은 임의 글자를 지우지 않는 편이 안전합니다.</p>
+            <div class="formfoot"><button class="btn pri sm" type="submit">코드 만들기</button><span class="msg" id="codeMsg" role="status"></span></div>
+          </form>
+        </div>
+        <div class="glass box"><h2>만든 코드</h2><div class="rows" id="codeRows"></div></div>
+      </section>
+
+      <!-- 게시판 -->
+      <section class="panel" id="p-board">
+        <div class="glass box"><h2>게시판 글</h2><p class="small mute">답글을 달거나 글을 지울 수 있습니다.</p><div class="rows" id="postRows"></div></div>
+      </section>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+/* ───────── Firebase 연결 정보 (공개 식별값입니다. 실제 보호는 Firestore 보안 규칙이 합니다) ───────── */
+const FB = "https://www.gstatic.com/firebasejs/13.3.0/";
+const firebaseConfig = {
+  apiKey: "AIzaSyBTk-GNQEM8DeEgHbegKEkN8QMzNSHQBDQ",
+  authDomain: "mypage-f218c.firebaseapp.com",
+  projectId: "mypage-f218c",
+  storageBucket: "mypage-f218c.firebasestorage.app",
+  messagingSenderId: "39694870774",
+  appId: "1:39694870774:web:4cd339d2625c9ed3baa4d7"
+};
+
+/* 메뉴별 공개 단계. member 는 입장코드를 넣은 뒤에만 보입니다. */
+const PAGE_LEVEL = { home: "public", resources: "public", programs: "public", notes: "public", board: "member", about: "public" };
+const AXIS_NAME = { ai: "AI·디지털 교육", creative: "창의·인재 교육" };
+
+/* 데이터베이스에 아직 저장된 내용이 없을 때 보이는 기본 문구 (관리자 페이지에서 모두 고칠 수 있습니다) */
+const DEFAULT_SITE = {
+  tagline1: "만들어 본 사람이",
+  tagline2: "미래를 만듭니다.",
+  lead: "메이커리는 AI·디지털 교육과 발명·영재 교육을 잇는 교육 아카이브입니다. 교실에서 직접 만들고 써 본 수업 자료를 선생님들과 나눕니다.",
+  owner: "강원특별자치도교육청 교사 이창준",
+  email: "eloquent09@naver.com",
+  about: "AI·디지털 교육과 발명·영재 교육 현장에서 수업하고, 그 과정에서 만든 자료를 동료 선생님들과 나눕니다. 메이커리는 만드는 사람(Maker)과 저의 성(Lee)을 합친 이름입니다. 만들어 본 경험이 아이들의 미래를 만든다고 믿습니다.",
+  menus: [
+    { id: "home", label: "홈", on: true },
+    { id: "resources", label: "자료실", on: true },
+    { id: "programs", label: "활동 영역", on: true },
+    { id: "notes", label: "노트", on: true },
+    { id: "board", label: "게시판", on: true },
+    { id: "about", label: "소개", on: true }
+  ],
+  work: [
+    { title: "수업 자료 공유", body: "연수와 수업에서 쓴 자료를 자료실에 모읍니다. 목록은 누구나 볼 수 있고, 연수에 참여한 선생님은 입장코드로 내려받습니다." },
+    { title: "교사 연수", body: "AI 교육, AI 융합·활용 수업, 디지털 교육, 발명·영재 교육을 주제로 선생님들과 만납니다. 연수 자료는 연수가 끝난 뒤에도 자료실에 남습니다." },
+    { title: "수업 기록", body: "수업을 설계하고 써 본 뒤 고친 과정을 노트에 기록해 나눕니다." }
+  ],
+  principles: [
+    { title: "만들면서 배운다", body: "설명을 듣는 수업보다 손으로 만들어 보는 수업을 먼저 생각합니다. AI도 발명도 만들어 볼 때 이해됩니다." },
+    { title: "내일 수업에 바로 쓴다", body: "교실에서 써 본 자료를 중심으로 올립니다. 내려받은 다음 날 수업에 쓸 수 있게 다듬습니다." },
+    { title: "나눌수록 커진다", body: "좋은 수업은 한 교실에 머물지 않아야 합니다. 자료를 고쳐 쓰고 다시 나누는 선생님이 늘어나기를 바랍니다." }
+  ],
+  fields: [
+    { axis: "ai", name: "인공지능 교육", desc: "인공지능이 어떻게 배우고 판단하는지를 초등학생 눈높이에서 체험하며 이해하는 수업" },
+    { axis: "ai", name: "인공지능 융합교육", desc: "국어, 수학, 과학, 미술 같은 교과 수업 안에 인공지능의 원리와 도구를 녹이는 수업" },
+    { axis: "ai", name: "인공지능 활용교육", desc: "생성형 AI를 비롯한 도구를 수업 준비와 학생 활동에 안전하고 쓸모 있게 쓰는 방법" },
+    { axis: "ai", name: "디지털교육", desc: "디지털 기기와 서비스를 배움의 도구로 다루는 힘, 디지털 소양을 기르는 수업" },
+    { axis: "creative", name: "발명교육", desc: "생활 속 불편을 찾아내고, 아이디어를 구체적인 물건과 해결책으로 만들어 보는 수업" },
+    { axis: "creative", name: "영재교육", desc: "깊이 탐구하고 스스로 과제를 설계하는 경험을 통해 잠재력을 키우는 수업" }
+  ],
+  faq: [
+    { q: "자료는 어떻게 내려받나요?", a: "화면 맨 위에 이름과 연수에서 안내받은 입장코드를 넣으면 자료실의 내려받기 버튼이 열립니다." },
+    { q: "입장코드가 없으면 어떻게 하나요?", a: "자료 목록과 소개는 코드 없이 볼 수 있습니다. 내려받기는 연수에 참여한 선생님께 드리고 있습니다. 꼭 필요한 자료가 있으면 메일로 알려 주세요." },
+    { q: "자료를 고쳐서 써도 되나요?", a: "수업과 연수 목적이라면 자유롭게 고쳐 쓰셔도 됩니다. 다시 나누실 때는 출처(메이커리)를 밝혀 주시고, 판매 같은 상업적 이용은 삼가 주세요." },
+    { q: "연수나 강의는 어떻게 문의하나요?", a: "소개 페이지의 메일로 주제, 대상, 희망 일정을 보내 주시면 답장드립니다." }
+  ]
+};
+
+/* ───────── 공통 도구 ───────── */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const arr = (v) => (Array.isArray(v) ? v : []);
+const str = (v, max) => String(v == null ? "" : v).slice(0, max || 4000);
+const tsMs = (t) => (!t ? 0 : typeof t === "number" ? t : t.toMillis ? t.toMillis() : 0);
+const byTs = (a, b) => tsMs(b.ts) - tsMs(a.ts);
+const fmtDate = (t) => {
+  const ms = tsMs(t); if (!ms) return "";
+  const d = new Date(ms);
+  return d.getFullYear() + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + String(d.getDate()).padStart(2, "0");
+};
+const normCode = (s) => String(s || "").replace(/\s+/g, "").toUpperCase();
+const CODE_RE = /^[A-Z0-9-]{4,40}$/;
+const httpsUrl = (u) => { u = String(u || "").trim(); return /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ""; };
+const isEmail = (s) => /^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/.test(String(s || ""));
+const say = (el, text, ok) => { if (typeof el === "string") el = $(el); if (!el) return; el.textContent = text || ""; el.className = "msg " + (ok ? "ok" : "err"); };
+
+/* 저장된 내용과 기본 문구를 합칩니다. 저장된 값이 있으면 그 값이 우선입니다. */
+function mergeSite(d) {
+  const s = clone(DEFAULT_SITE);
+  d = d || {};
+  ["tagline1", "tagline2", "lead", "owner", "email", "about"].forEach((k) => { if (typeof d[k] === "string") s[k] = d[k]; });
+  ["work", "principles", "fields", "faq"].forEach((k) => { if (Array.isArray(d[k])) s[k] = d[k].filter((x) => x && typeof x === "object"); });
+  if (Array.isArray(d.menus)) {
+    const seen = {}, out = [];
+    d.menus.forEach((m) => {
+      if (!m || !PAGE_LEVEL[m.id] || seen[m.id]) return;
+      seen[m.id] = 1;
+      const def = DEFAULT_SITE.menus.filter((x) => x.id === m.id)[0];
+      out.push({ id: m.id, label: str(m.label, 12).trim() || def.label, on: m.id === "home" ? true : m.on !== false });
+    });
+    DEFAULT_SITE.menus.forEach((m) => { if (!seen[m.id]) out.push(clone(m)); });
+    s.menus = out;
+  }
+  return s;
+}
+
+/* 삭제 버튼: 한 번 누르면 확인 문구로 바뀌고, 다시 누르면 실행합니다. */
+function armed(btn, run) {
+  if (btn.dataset.armed !== "1") {
+    btn.dataset.armed = "1"; btn.dataset.label = btn.textContent; btn.textContent = "한 번 더 누르면 삭제";
+    setTimeout(() => { if (btn.isConnected && btn.dataset.armed === "1") { btn.dataset.armed = ""; btn.textContent = btn.dataset.label; } }, 3500);
+    return;
+  }
+  btn.disabled = true;
+  Promise.resolve().then(run).catch(() => { if (btn.isConnected) { btn.disabled = false; btn.dataset.armed = ""; btn.textContent = "삭제하지 못했습니다"; } });
+}
+
+/* ───────── 관리자 페이지 ───────── */
+const A = {
+  site: mergeSite(null), siteExists: false, siteLoaded: false,
+  res: [], resLoaded: false,
+  notices: [], noticesLoaded: false,
+  member: { career: [], info: "", links: {}, notes: [] }, memberLoaded: false,
+  codes: [], posts: [],
+  editRes: null, editNote: null
+};
+const dirty = { basic: false, menu: false, copy: false, member: false };
+const drafts = {};                 // 게시판 답글 임시 글
+let fs, au, db, auth, unsubs = [];
+const v = (sel) => $(sel).value.trim();
+const newId = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const LOADING = "아직 불러오는 중입니다. 잠시 뒤 다시 눌러 주세요.";
+const saveErr = (e) => (e && e.code === "permission-denied"
+  ? "저장 권한이 없습니다. 관리자 계정인지, 보안 규칙이 게시되어 있는지 확인해 주세요."
+  : "저장하지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.");
+const PAGE_TITLE = { home: "첫 화면", resources: "자료 목록과 내려받기", programs: "활동 분야 소개", notes: "공지와 수업 기록", board: "연수생 게시판", about: "소개와 연락 안내" };
+
+/* ───────── 여러 줄 편집기 (하는 일, 원칙, 분야, 질문, 이력) ───────── */
+function listEditor(root, schema, opt) {
+  opt = opt || {};
+  let items = [];
+  function fieldHtml(f, val) {
+    const cls = f.wide ? ' class="wide"' : "";
+    if (f.type === "select") {
+      return "<label" + cls + ">" + esc(f.label) + '<select class="field" data-k="' + f.key + '">' +
+        f.options.map((o) => '<option value="' + esc(o[0]) + '"' + (o[0] === val ? " selected" : "") + ">" + esc(o[1]) + "</option>").join("") + "</select></label>";
+    }
+    if (f.type === "textarea") {
+      return "<label" + cls + ">" + esc(f.label) + '<textarea class="field" data-k="' + f.key + '" maxlength="' + (f.max || 400) + '" style="min-height:70px">' + esc(val) + "</textarea></label>";
+    }
+    return "<label" + cls + ">" + esc(f.label) + '<input class="field" data-k="' + f.key + '" maxlength="' + (f.max || 80) + '" value="' + esc(val) + '"></label>';
+  }
+  function render() {
+    root.innerHTML = items.map((it, i) =>
+      '<div class="ed-row" data-row="' + i + '"><div class="ed-fields">' + schema.map((f) => fieldHtml(f, it[f.key] == null ? "" : String(it[f.key]))).join("") + "</div>" +
+      '<div class="ed-btns"><button class="mini" type="button" data-act="up" data-i="' + i + '"' + (i === 0 ? " disabled" : "") + ">↑ 위로</button>" +
+      '<button class="mini" type="button" data-act="down" data-i="' + i + '"' + (i === items.length - 1 ? " disabled" : "") + ">↓ 아래로</button>" +
+      '<button class="mini sp" type="button" data-act="del" data-i="' + i + '">삭제</button></div></div>').join("") +
+      (items.length >= (opt.max || 12) ? "" : '<div><button class="btn sm ghost" type="button" data-act="add">＋ ' + esc(opt.addLabel || "추가") + "</button></div>");
+  }
+  function collect() {
+    items = $$("[data-row]", root).map((row) => {
+      const o = Object.assign({}, items[+row.dataset.row]);
+      schema.forEach((f) => { o[f.key] = $('[data-k="' + f.key + '"]', row).value.trim(); });
+      return o;
+    });
+    return clone(items);
+  }
+  root.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    collect();
+    const i = +b.dataset.i, act = b.dataset.act;
+    if (act === "del") items.splice(i, 1);
+    else if (act === "up" && i > 0) items.splice(i - 1, 0, items.splice(i, 1)[0]);
+    else if (act === "down" && i < items.length - 1) items.splice(i + 1, 0, items.splice(i, 1)[0]);
+    else if (act === "add") { const o = {}; schema.forEach((f) => { o[f.key] = f.type === "select" ? f.options[0][0] : ""; }); items.push(o); }
+    render(); if (opt.onChange) opt.onChange();
+  });
+  root.addEventListener("input", () => { if (opt.onChange) opt.onChange(); });
+  return { set(a) { items = clone(arr(a)); render(); }, get: collect };
+}
+const TB = [{ key: "title", label: "제목", max: 30 }, { key: "body", label: "설명", type: "textarea", max: 220, wide: true }];
+const workEd = listEditor($("#workEd"), TB, { max: 6, addLabel: "하는 일 추가", onChange: () => { dirty.copy = true; } });
+const prinEd = listEditor($("#prinEd"), TB, { max: 6, addLabel: "원칙 추가", onChange: () => { dirty.copy = true; } });
+const fieldEd = listEditor($("#fieldEd"), [
+  { key: "axis", label: "축", type: "select", options: [["ai", AXIS_NAME.ai], ["creative", AXIS_NAME.creative]] },
+  { key: "name", label: "분야 이름", max: 20 },
+  { key: "desc", label: "설명", type: "textarea", max: 220, wide: true }
+], { max: 10, addLabel: "분야 추가", onChange: () => { dirty.copy = true; } });
+const faqEd = listEditor($("#faqEd"), [{ key: "q", label: "질문", max: 80, wide: true }, { key: "a", label: "답", type: "textarea", max: 500, wide: true }], { max: 12, addLabel: "질문 추가", onChange: () => { dirty.copy = true; } });
+const careerEd = listEditor($("#careerEd"), [
+  { key: "kind", label: "구분", type: "select", options: ["수상", "연구", "활동", "자격", "저서", "연수"].map((k) => [k, k]) },
+  { key: "text", label: "내용", max: 120 }
+], { max: 40, addLabel: "이력 추가", onChange: () => { dirty.member = true; } });
+
+/* 메뉴 편집기: 이름, 표시 여부, 순서 */
+const menuEd = (function () {
+  const root = $("#menuEd"); let items = [];
+  function render() {
+    root.innerHTML = items.map((m, i) =>
+      '<div class="ed-row" data-row="' + i + '"><div class="ed-fields"><label>메뉴 이름<input class="field" data-k="label" maxlength="12" value="' + esc(m.label) + '"></label>' +
+      '<label class="check"><input type="checkbox" data-k="on"' + (m.on !== false ? " checked" : "") + (m.id === "home" ? " disabled" : "") + "> 메뉴에 표시</label></div>" +
+      '<div class="ed-btns"><span class="chip' + (PAGE_LEVEL[m.id] === "member" ? " c" : "") + '">' + (PAGE_LEVEL[m.id] === "member" ? "연수생 전용" : "공개") + '</span><span class="small mute">' + PAGE_TITLE[m.id] + "</span>" +
+      '<button class="mini sp" type="button" data-act="up" data-i="' + i + '"' + (i === 0 ? " disabled" : "") + ">↑ 위로</button>" +
+      '<button class="mini" type="button" data-act="down" data-i="' + i + '"' + (i === items.length - 1 ? " disabled" : "") + ">↓ 아래로</button></div></div>").join("");
+  }
+  function collect() {
+    items = $$("[data-row]", root).map((row) => {
+      const m = items[+row.dataset.row];
+      return { id: m.id, label: $('[data-k="label"]', row).value.trim() || m.label, on: m.id === "home" ? true : $('[data-k="on"]', row).checked };
+    });
+    return clone(items);
+  }
+  root.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    collect(); const i = +b.dataset.i;
+    if (b.dataset.act === "up" && i > 0) items.splice(i - 1, 0, items.splice(i, 1)[0]);
+    if (b.dataset.act === "down" && i < items.length - 1) items.splice(i + 1, 0, items.splice(i, 1)[0]);
+    render(); dirty.menu = true;
+  });
+  root.addEventListener("input", () => { dirty.menu = true; });
+  return { set(a) { items = clone(a); render(); }, get: collect };
+})();
+
+/* ───────── 폼 채우기 ───────── */
+function fillBasic() {
+  const s = A.site;
+  $("#b-t1").value = s.tagline1; $("#b-t2").value = s.tagline2; $("#b-lead").value = s.lead;
+  $("#b-owner").value = s.owner; $("#b-email").value = s.email; $("#b-about").value = s.about;
+  dirty.basic = false;
+}
+function fillMenu() { menuEd.set(A.site.menus); dirty.menu = false; }
+function fillCopy() { workEd.set(A.site.work); prinEd.set(A.site.principles); fieldEd.set(A.site.fields); faqEd.set(A.site.faq); dirty.copy = false; }
+function fillMember() { careerEd.set(A.member.career); $("#m-info").value = A.member.info; dirty.member = false; }
+function fillFieldSelect(keep) {
+  const sel = $("#r-field"), cur = sel.value;
+  sel.innerHTML = (keep ? '<option value="keep">' + esc(keep) + " (지금 값 유지)</option>" : "") +
+    A.site.fields.map((f, i) => '<option value="' + i + '">' + esc(f.name) + "</option>").join("");
+  if (!keep && cur !== "" && cur !== "keep" && +cur < A.site.fields.length) sel.value = cur;
+}
+$("#basicForm").addEventListener("input", () => { dirty.basic = true; });
+$("#m-info").addEventListener("input", () => { dirty.member = true; });
+
+/* ───────── 목록 그리기 ───────── */
+const linkOf = (id) => httpsUrl(A.member.links && A.member.links[id]);
+function renderRes() {
+  $("#resRows").innerHTML = A.res.length ? A.res.slice().sort(byTs).map((r) =>
+    '<div class="rowitem"><div class="rowhead"><b>' + esc(r.title) + '</b><span class="chip ' + (r.axis === "creative" ? "c" : "v") + '">' + esc(r.field) + '</span><span class="chip">' + esc(r.kind) + "</span>" +
+    (linkOf(r.id) ? '<span class="chip c">링크 있음</span>' : '<span class="chip w">링크 없음</span>') + "</div>" +
+    (r.desc ? '<div class="body">' + esc(r.desc) + "</div>" : "") +
+    '<div class="rowbtns"><button class="btn sm" type="button" data-edit-res="' + esc(r.id) + '">수정</button><button class="x" type="button" data-del-res="' + esc(r.id) + '">삭제</button><span class="small mute">' + fmtDate(r.ts) + "</span></div></div>").join("")
+    : '<p class="empty">아직 올린 자료가 없습니다.</p>';
+}
+function allNotes() {
+  return A.notices.map((n) => Object.assign({ scope: "public" }, n)).concat(A.member.notes.map((n) => Object.assign({ scope: "member" }, n))).sort(byTs);
+}
+function renderNotes() {
+  const notes = allNotes();
+  $("#noteRows").innerHTML = notes.length ? notes.map((n) =>
+    '<div class="rowitem"><div class="rowhead"><b>' + esc(n.title) + '</b><span class="chip v">' + esc(n.tag || "노트") + "</span>" +
+    (n.scope === "member" ? '<span class="chip c">연수생 전용</span>' : '<span class="chip">공개</span>') + "</div>" +
+    '<div class="rowbtns"><button class="btn sm" type="button" data-edit-note="' + esc(n.id) + '">수정</button><button class="x" type="button" data-del-note="' + esc(n.id) + '">삭제</button><span class="small mute">' + fmtDate(n.ts) + "</span></div></div>").join("")
+    : '<p class="empty">아직 올린 노트가 없습니다.</p>';
+}
+function codeState(c) {
+  if (c.active === false) return ["중지됨", "w"];
+  if (c.expires && tsMs(c.expires) < Date.now()) return ["기한 지남", "w"];
+  return ["사용 중", "c"];
+}
+function renderCodes() {
+  $("#codeRows").innerHTML = A.codes.length ? A.codes.map((c) => {
+    const st = codeState(c);
+    return '<div class="rowitem"><div class="rowhead"><span class="codebig">' + esc(c.code) + '</span><span class="chip ' + st[1] + '">' + st[0] + "</span>" +
+      (c.expires ? '<span class="chip">' + fmtDate(c.expires) + "까지</span>" : '<span class="chip">기한 없음</span>') + "</div>" +
+      '<div class="small mute">' + esc(c.label || "") + "</div>" +
+      '<div class="rowbtns"><button class="btn sm" type="button" data-copy-code="' + esc(c.code) + '">코드 복사</button>' +
+      '<button class="btn sm ghost" type="button" data-toggle-code="' + esc(c.code) + '">' + (c.active === false ? "다시 사용" : "사용 중지") + "</button>" +
+      '<button class="x" type="button" data-del-code="' + esc(c.code) + '">삭제</button></div></div>';
+  }).join("") : '<p class="empty">아직 만든 코드가 없습니다. 코드를 하나 만들어야 연수생이 들어올 수 있습니다.</p>';
+}
+function renderPosts() {
+  $$("[data-reply-text]").forEach((t) => { drafts[t.dataset.replyText] = t.value; });
+  $("#postRows").innerHTML = A.posts.length ? A.posts.map((p) =>
+    '<div class="rowitem"><div class="rowhead"><b>' + esc(p.title) + '</b><span class="chip c">' + esc(p.cat || "글") + '</span><span class="small mute">' + esc(p.name || "") + " · " + fmtDate(p.ts) + "</span></div>" +
+    '<div class="body">' + esc(p.body) + "</div>" +
+    '<label class="lab">답글<textarea class="field" data-reply-text="' + esc(p.id) + '" maxlength="1500" style="min-height:70px">' + esc(drafts[p.id] != null ? drafts[p.id] : p.reply || "") + "</textarea></label>" +
+    '<div class="rowbtns"><button class="btn sm" type="button" data-reply="' + esc(p.id) + '">답글 저장</button><button class="x" type="button" data-del-post="' + esc(p.id) + '">글 삭제</button><span class="msg" data-reply-msg="' + esc(p.id) + '"></span></div></div>').join("")
+    : '<p class="empty">아직 글이 없습니다.</p>';
+}
+
+/* ───────── 저장 ───────── */
+async function saveSite(patch, msg) {
+  if (!A.siteLoaded) { say(msg, LOADING); return false; }
+  try {
+    await fs.setDoc(fs.doc(db, "site", "main"), Object.assign({}, A.site, patch, { updatedAt: Date.now() }));
+    say(msg, "저장했습니다. 사이트에 바로 반영됩니다.", true); return true;
+  } catch (e) { say(msg, saveErr(e)); return false; }
+}
+$("#basicForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = v("#b-email");
+  if (email && !isEmail(email)) return say("#basicMsg", "메일 주소 형식을 확인해 주세요.");
+  if (await saveSite({ tagline1: v("#b-t1"), tagline2: v("#b-t2"), lead: v("#b-lead"), owner: v("#b-owner"), email: email, about: v("#b-about") }, "#basicMsg")) dirty.basic = false;
+});
+$("#menuSave").addEventListener("click", async () => { if (await saveSite({ menus: menuEd.get() }, "#menuMsg")) dirty.menu = false; });
+$("#copySave").addEventListener("click", async () => {
+  const work = workEd.get().filter((x) => x.title || x.body), principles = prinEd.get().filter((x) => x.title || x.body),
+    fields = fieldEd.get().filter((x) => x.name), faq = faqEd.get().filter((x) => x.q);
+  if (!fields.length) return say("#copyMsg", "분야는 하나 이상 있어야 합니다.");
+  if (await saveSite({ work: work, principles: principles, fields: fields, faq: faq }, "#copyMsg")) { dirty.copy = false; fillFieldSelect(); }
+});
+$("#memberSave").addEventListener("click", async () => {
+  if (!A.memberLoaded) return say("#memberMsg", LOADING);
+  try {
+    await fs.setDoc(fs.doc(db, "member", "main"), Object.assign({}, A.member, { career: careerEd.get().filter((c) => c.text), info: $("#m-info").value.trim() }));
+    dirty.member = false; say("#memberMsg", "저장했습니다. 연수생 화면에 바로 반영됩니다.", true);
+  } catch (e) { say("#memberMsg", saveErr(e)); }
+});
+
+/* 자료: 공개 목록(site/resources)과 연수생 전용 링크(member/main)를 한 번에 저장합니다 */
+function resetResForm() {
+  A.editRes = null; $("#resForm").reset(); fillFieldSelect();
+  $("#resFormTitle").textContent = "자료 올리기"; $("#resCancel").hidden = true;
+}
+async function writeRes(items, member) {
+  const b = fs.writeBatch(db);
+  b.set(fs.doc(db, "site", "resources"), { items: items });
+  b.set(fs.doc(db, "member", "main"), member);
+  await b.commit();
+}
+$("#resForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!A.resLoaded || !A.memberLoaded || !A.siteLoaded) return say("#resMsg", LOADING);
+  const link = v("#r-link");
+  if (link && !httpsUrl(link)) return say("#resMsg", "링크는 https:// 로 시작하는 주소여야 합니다.");
+  const old = A.editRes ? A.res.filter((r) => r.id === A.editRes)[0] : null;
+  const fv = $("#r-field").value, f = fv === "keep" && old ? { axis: old.axis, name: old.field } : A.site.fields[+fv] || A.site.fields[0] || { axis: "ai", name: "" };
+  const id = old ? old.id : newId("r");
+  const item = { id: id, title: v("#r-title"), desc: v("#r-desc"), axis: f.axis === "creative" ? "creative" : "ai", field: f.name, kind: $("#r-kind").value, training: v("#r-training"), target: v("#r-target"), ts: old ? old.ts : Date.now(), hasLink: !!link };
+  const member = clone(A.member);
+  if (link) member.links[id] = link; else delete member.links[id];
+  try { await writeRes(A.res.filter((r) => r.id !== id).concat(item), member); resetResForm(); say("#resMsg", "저장했습니다.", true); }
+  catch (err) { say("#resMsg", saveErr(err)); }
+});
+$("#resCancel").addEventListener("click", () => { resetResForm(); say("#resMsg", ""); });
+
+/* 노트: 공개 글은 site/notices, 연수생 전용 글은 member/main 에 저장합니다 */
+function resetNoteForm() { A.editNote = null; $("#noteForm").reset(); $("#noteFormTitle").textContent = "노트 쓰기"; $("#noteCancel").hidden = true; }
+async function writeNotes(notices, member) {
+  const b = fs.writeBatch(db);
+  b.set(fs.doc(db, "site", "notices"), { items: notices });
+  b.set(fs.doc(db, "member", "main"), member);
+  await b.commit();
+}
+$("#noteForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!A.noticesLoaded || !A.memberLoaded) return say("#noteMsg", LOADING);
+  const old = A.editNote ? allNotes().filter((n) => n.id === A.editNote)[0] : null;
+  const id = old ? old.id : newId("n");
+  const note = { id: id, title: v("#n-title"), tag: $("#n-tag").value, body: $("#n-body").value.trim(), ts: old ? old.ts : Date.now() };
+  const member = clone(A.member);
+  let notices = A.notices.filter((n) => n.id !== id);
+  member.notes = member.notes.filter((n) => n.id !== id);
+  if ($("#n-scope").value === "member") member.notes.push(note); else notices = notices.concat(note);
+  try { await writeNotes(notices, member); resetNoteForm(); say("#noteMsg", "저장했습니다.", true); }
+  catch (err) { say("#noteMsg", saveErr(err)); }
+});
+$("#noteCancel").addEventListener("click", () => { resetNoteForm(); say("#noteMsg", ""); });
+
+/* 입장코드 */
+function genCode() {
+  const d = new Date(), abc = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", r = crypto.getRandomValues(new Uint8Array(5));
+  let s = ""; for (let i = 0; i < 5; i++) s += abc[r[i] % abc.length];
+  return String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + "-" + s;
+}
+$("#c-code").value = genCode();
+$("#c-regen").addEventListener("click", () => { $("#c-code").value = genCode(); });
+$("#codeForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const code = normCode(v("#c-code")), exp = $("#c-exp").value;
+  if (!CODE_RE.test(code)) return say("#codeMsg", "코드는 영문 대문자, 숫자, 붙임표(-)로 4자 이상이어야 합니다.");
+  if (A.codes.some((c) => c.code === code)) return say("#codeMsg", "이미 있는 코드입니다. 다른 코드를 만들어 주세요.");
+  try {
+    await fs.setDoc(fs.doc(db, "codes", code), { label: v("#c-label"), active: true, expires: exp ? fs.Timestamp.fromDate(new Date(exp + "T23:59:59+09:00")) : null, createdAt: fs.serverTimestamp() });
+    $("#c-label").value = ""; $("#c-exp").value = ""; $("#c-code").value = genCode();
+    say("#codeMsg", "코드 " + code + " 을(를) 만들었습니다." + (code.length < 8 ? " 짧은 코드는 추측하기 쉽습니다." : ""), true);
+  } catch (err) { say("#codeMsg", saveErr(err)); }
+});
+
+/* 목록 안의 버튼들 */
+document.addEventListener("click", async (e) => {
+  const t = (name) => e.target.closest("[data-" + name + "]");
+  let b;
+  if ((b = t("edit-res"))) {
+    const r = A.res.filter((x) => x.id === b.dataset.editRes)[0]; if (!r) return;
+    A.editRes = r.id;
+    const idx = A.site.fields.map((f) => f.name).indexOf(r.field);
+    fillFieldSelect(idx < 0 ? r.field : null); $("#r-field").value = idx < 0 ? "keep" : String(idx);
+    $("#r-title").value = r.title || ""; $("#r-desc").value = r.desc || ""; $("#r-kind").value = r.kind || "기타";
+    $("#r-training").value = r.training || ""; $("#r-target").value = r.target || ""; $("#r-link").value = linkOf(r.id);
+    $("#resFormTitle").textContent = "자료 수정"; $("#resCancel").hidden = false; say("#resMsg", "");
+    $("#resForm").scrollIntoView({ behavior: "smooth", block: "center" });
+  } else if ((b = t("del-res"))) {
+    const id = b.dataset.delRes;
+    armed(b, () => { const m = clone(A.member); delete m.links[id]; return writeRes(A.res.filter((r) => r.id !== id), m); });
+  } else if ((b = t("edit-note"))) {
+    const n = allNotes().filter((x) => x.id === b.dataset.editNote)[0]; if (!n) return;
+    A.editNote = n.id; $("#n-title").value = n.title || ""; $("#n-tag").value = n.tag || "공지"; $("#n-scope").value = n.scope; $("#n-body").value = n.body || "";
+    $("#noteFormTitle").textContent = "노트 수정"; $("#noteCancel").hidden = false; say("#noteMsg", "");
+    $("#noteForm").scrollIntoView({ behavior: "smooth", block: "center" });
+  } else if ((b = t("del-note"))) {
+    const id = b.dataset.delNote;
+    armed(b, () => { const m = clone(A.member); m.notes = m.notes.filter((n) => n.id !== id); return writeNotes(A.notices.filter((n) => n.id !== id), m); });
+  } else if ((b = t("copy-code"))) {
+    const code = b.dataset.copyCode, old = b.textContent;
+    try { await navigator.clipboard.writeText(code); b.textContent = "복사했습니다"; } catch (err) { b.textContent = "복사하지 못했습니다"; }
+    setTimeout(() => { if (b.isConnected) b.textContent = old; }, 1800);
+  } else if ((b = t("toggle-code"))) {
+    const c = A.codes.filter((x) => x.code === b.dataset.toggleCode)[0]; if (!c) return;
+    b.disabled = true;
+    try { await fs.updateDoc(fs.doc(db, "codes", c.code), { active: c.active === false }); } catch (err) { b.disabled = false; b.textContent = "바꾸지 못했습니다"; }
+  } else if ((b = t("del-code"))) {
+    const code = b.dataset.delCode;
+    armed(b, () => fs.deleteDoc(fs.doc(db, "codes", code)));
+  } else if ((b = t("reply"))) {
+    const id = b.dataset.reply, ta = $('[data-reply-text="' + id + '"]'), msg = $('[data-reply-msg="' + id + '"]');
+    b.disabled = true;
+    try {
+      await fs.updateDoc(fs.doc(db, "posts", id), { reply: ta.value.trim(), replyTs: fs.serverTimestamp() });
+      delete drafts[id]; say(msg, "답글을 저장했습니다.", true);
+    } catch (err) { say(msg, saveErr(err)); }
+    b.disabled = false;
+  } else if ((b = t("del-post"))) {
+    const id = b.dataset.delPost;
+    armed(b, () => fs.deleteDoc(fs.doc(db, "posts", id)));
+  }
+});
+document.addEventListener("input", (e) => { const ta = e.target.closest("[data-reply-text]"); if (ta) drafts[ta.dataset.replyText] = ta.value; });
+
+/* 탭 */
+$("#tabs").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-t]"); if (!b) return;
+  $$("#tabs button").forEach((x) => x.classList.toggle("on", x === b));
+  $$(".panel").forEach((p) => p.classList.toggle("on", p.id === "p-" + b.dataset.t));
+  window.scrollTo(0, 0);
+});
+
+/* ───────── 데이터 연결 ───────── */
+function stopAll() {
+  unsubs.forEach((u) => u()); unsubs = [];
+  A.siteLoaded = A.resLoaded = A.noticesLoaded = A.memberLoaded = false;
+}
+function startAll() {
+  if (unsubs.length) return;
+  const fresh = (s) => !s.metadata.fromCache;           // 서버에서 확인된 내용만 "불러옴"으로 칩니다 (빈 값 덮어쓰기 방지)
+  const items = (s) => (s.exists() ? arr(s.data().items) : []);
+  unsubs.push(fs.onSnapshot(fs.doc(db, "site", "main"), (s) => {
+    A.site = mergeSite(s.exists() ? s.data() : null); A.siteExists = s.exists();
+    const first = !A.siteLoaded && fresh(s); if (fresh(s)) A.siteLoaded = true;
+    $("#firstRun").hidden = !(A.siteLoaded && !A.siteExists);
+    if (first || !dirty.basic) fillBasic();
+    if (first || !dirty.menu) fillMenu();
+    if (first || !dirty.copy) fillCopy();
+    if (!A.editRes) fillFieldSelect();
+  }));
+  unsubs.push(fs.onSnapshot(fs.doc(db, "site", "resources"), (s) => { A.res = items(s); if (fresh(s)) A.resLoaded = true; renderRes(); }));
+  unsubs.push(fs.onSnapshot(fs.doc(db, "site", "notices"), (s) => { A.notices = items(s); if (fresh(s)) A.noticesLoaded = true; renderNotes(); }));
+  unsubs.push(fs.onSnapshot(fs.doc(db, "member", "main"), (s) => {
+    const d = s.exists() ? s.data() : {};
+    A.member = { career: arr(d.career), info: str(d.info), links: d.links && typeof d.links === "object" ? d.links : {}, notes: arr(d.notes) };
+    const first = !A.memberLoaded && fresh(s); if (fresh(s)) A.memberLoaded = true;
+    if (first || !dirty.member) fillMember();
+    renderRes(); renderNotes();
+  }));
+  unsubs.push(fs.onSnapshot(fs.collection(db, "codes"), (q) => {
+    A.codes = q.docs.map((d) => Object.assign({ code: d.id }, d.data({ serverTimestamps: "estimate" }))).sort((a, b) => tsMs(b.createdAt) - tsMs(a.createdAt));
+    renderCodes();
+  }));
+  unsubs.push(fs.onSnapshot(fs.query(fs.collection(db, "posts"), fs.orderBy("ts", "desc"), fs.limit(300)), (q) => {
+    A.posts = q.docs.map((d) => Object.assign({ id: d.id }, d.data({ serverTimestamps: "estimate" })));
+    renderPosts();
+  }));
+}
+
+function showLogin(text, ok) {
+  $("#console").hidden = true; $("#login").hidden = false; $("#whoMail").textContent = "";
+  say("#loginMsg", text || "", ok);
+}
+async function onUser(user) {
+  stopAll();
+  if (!user) { $("#logout").hidden = true; return showLogin(""); }
+  $("#logout").hidden = false;
+  if (user.isAnonymous) return showLogin("이 브라우저는 연수생 모드로 열려 있습니다. 관리자 Google 계정으로 로그인해 주세요.");
+  showLogin("권한을 확인하는 중입니다.", true);
+  try { await fs.getDocs(fs.query(fs.collection(db, "codes"), fs.limit(1))); }
+  catch (e) {
+    return showLogin(e && e.code === "permission-denied"
+      ? "이 계정(" + (user.email || "") + ")에는 관리자 권한이 없거나, 보안 규칙이 아직 게시되지 않았습니다."
+      : "데이터베이스에 연결하지 못했습니다. Firestore 데이터베이스를 만들었는지 확인해 주세요.");
+  }
+  $("#login").hidden = true; $("#console").hidden = false; $("#whoMail").textContent = user.email || "";
+  startAll();
+}
+
+(async function connect() {
+  try {
+    const m = await Promise.all([import(FB + "firebase-app.js"), import(FB + "firebase-firestore.js"), import(FB + "firebase-auth.js")]);
+    const app = m[0].initializeApp(firebaseConfig); fs = m[1]; au = m[2];
+    db = fs.getFirestore(app); auth = au.getAuth(app);
+  } catch (e) {
+    $("#loginBtn").disabled = true;
+    return showLogin("Firebase에 연결하지 못했습니다. 인터넷 연결을 확인한 뒤 페이지를 다시 열어 주세요.");
+  }
+  au.onAuthStateChanged(auth, onUser);
+  $("#loginBtn").addEventListener("click", async () => {
+    say("#loginMsg", "");
+    try { await au.signInWithPopup(auth, new au.GoogleAuthProvider()); }
+    catch (e) {
+      const c = (e && e.code) || "";
+      say("#loginMsg",
+        c === "auth/popup-blocked" ? "로그인 창이 차단되었습니다. 브라우저에서 이 사이트의 팝업을 허용해 주세요."
+        : c === "auth/unauthorized-domain" ? "이 사이트 주소가 Firebase에 등록되어 있지 않습니다. Firebase 콘솔 > Authentication > 설정 > 승인된 도메인에 이 주소를 추가해 주세요."
+        : c === "auth/operation-not-allowed" ? "Google 로그인이 켜져 있지 않습니다. Firebase 콘솔 > Authentication > 로그인 방법에서 Google을 사용 설정해 주세요."
+        : c === "auth/popup-closed-by-user" || c === "auth/cancelled-popup-request" ? "로그인 창이 닫혔습니다. 다시 눌러 주세요."
+        : "로그인하지 못했습니다. (" + c + ")");
+    }
+  });
+  $("#logout").addEventListener("click", () => au.signOut(auth));
+})();
+
+</script>
+</body>
+</html>
